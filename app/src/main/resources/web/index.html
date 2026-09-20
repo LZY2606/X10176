@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>谱峰案卷 · Peak Dossier</title>
+<style>
+:root { --bg:#0f1420; --panel:#171e2e; --panel2:#1e2840; --line:#2b3856; --fg:#e6ecf8; --dim:#8fa0c0;
+  --accent:#5aa9ff; --ok:#3ddc84; --warn:#ffb648; --bad:#ff6b6b; --purple:#b58cff; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft Yahei",sans-serif; background:var(--bg); color:var(--fg); font-size:13px; }
+header { display:flex; align-items:center; gap:12px; padding:10px 16px; background:linear-gradient(90deg,#15203a,#0f1420); border-bottom:1px solid var(--line); }
+header h1 { font-size:18px; margin:0; letter-spacing:2px; }
+header .sub { color:var(--dim); font-size:12px; }
+.layout { display:grid; grid-template-columns:300px 1fr 380px; gap:10px; padding:10px; height:calc(100vh - 51px); }
+.col { background:var(--panel); border:1px solid var(--line); border-radius:8px; overflow-y:auto; padding:10px; }
+h2 { font-size:13px; margin:14px 0 6px; color:var(--accent); letter-spacing:1px; }
+h2:first-child { margin-top:0; }
+button { background:var(--panel2); color:var(--fg); border:1px solid var(--line); border-radius:5px; padding:5px 10px; cursor:pointer; font-size:12px; }
+button:hover { border-color:var(--accent); }
+button.primary { background:#23508a; border-color:#3a6fb5; }
+button.danger { background:#7a2e38; border-color:#a04050; }
+input,select,textarea { background:#0e1525; color:var(--fg); border:1px solid var(--line); border-radius:5px; padding:5px 8px; width:100%; font-size:12px; }
+textarea { min-height:70px; font-family:ui-monospace,monospace; }
+label { display:block; color:var(--dim); margin:6px 0 2px; font-size:11px; }
+.row { display:flex; gap:6px; align-items:center; }
+.tree { list-style:none; padding:0; margin:0; }
+.tree li { padding:4px 6px; border-radius:4px; cursor:pointer; display:flex; gap:6px; align-items:center; }
+.tree li:hover { background:var(--panel2); }
+.tree li.active { background:#23508a; }
+.tag { font-size:10px; padding:1px 5px; border-radius:8px; background:var(--panel2); color:var(--dim); border:1px solid var(--line); }
+.tag.INGEST { color:#7fd4ff; } .tag.CALIBRATION { color:var(--warn); } .tag.RULES { color:var(--purple); }
+.tag.ADJUDICATION { color:var(--ok); } .tag.ANNOTATION { color:#ffd166; } .tag.BASELINE { color:#8be0c0; } .tag.ROOT { color:var(--dim); }
+canvas { width:100%; background:#0b101c; border:1px solid var(--line); border-radius:6px; display:block; }
+.card { background:var(--panel2); border:1px solid var(--line); border-radius:6px; padding:8px; margin:6px 0; }
+.card.accepted { border-color:var(--ok); } .card.rejected { opacity:.55; border-color:var(--bad); }
+.card.selected { outline:2px solid var(--accent); }
+.pill { display:inline-block; font-size:10px; padding:1px 6px; border-radius:8px; margin-right:4px; }
+.pill.proposed { background:#33415e; color:#bcd2ff; } .pill.accepted { background:#1e4d34; color:var(--ok); }
+.pill.rejected { background:#53232b; color:var(--bad); } .pill.conflict { background:#5a3a1a; color:var(--warn); }
+.muted { color:var(--dim); }
+.mono { font-family:ui-monospace,monospace; font-size:11px; }
+.tabs { display:flex; gap:4px; margin-bottom:6px; flex-wrap:wrap; }
+.tabs button { padding:4px 8px; } .tabs button.on { background:#23508a; border-color:var(--accent); }
+table { width:100%; border-collapse:collapse; font-size:11px; }
+td,th { border-bottom:1px solid var(--line); padding:3px 4px; text-align:left; }
+.err { color:var(--bad); font-size:11px; white-space:pre-wrap; }
+.ok { color:var(--ok); }
+.evidence { font-size:11px; line-height:1.5; }
+.evidence code { color:#9ad0ff; }
+.badge-count { background:var(--bad); border-radius:9px; padding:0 6px; font-size:10px; color:#fff; }
+.scrollx { overflow-x:auto; }
+.legend span { margin-right:10px; font-size:11px; }
+.dot { display:inline-block; width:8px;height:8px;border-radius:2px;margin-right:3px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>谱峰案卷</h1>
+  <span class="sub">centroid 质谱 · 同位素簇 / 加合物候选 · 版本化裁定</span>
+  <span style="flex:1"></span>
+  <span class="muted">当前版本 <b id="headTag">-</b></span>
+</header>
+<div class="layout">
+  <div class="col" id="leftCol">
+    <h2>分析分支 / 版本</h2>
+    <ul class="tree" id="versionTree"></ul>
+    <h2>批量导入</h2>
+    <textarea id="ingestText" placeholder="mz,intensity,scan,polarity&#10;195.0871,120000,5.02,+"></textarea>
+    <label>文件名</label><input id="ingestName" value="batch.csv">
+    <label>编辑者</label><input id="ingestEditor" value="analyst-a">
+    <div class="row" style="margin-top:6px"><button class="primary" onclick="doIngest()">导入（部分失败隔离）</button></div>
+    <div id="ingestResult"></div>
+    <h2>峰操作（仅影响新分支）</h2>
+    <label>峰键</label><input id="annPeak" placeholder="P+_mz195.087100_rt5.0200">
+    <label>动作</label><select id="annType"><option value="CONTAMINANT">标记为污染</option><option value="SPLIT">拆分过饱和峰</option></select>
+    <label>原因</label><input id="annReason" value="手动复核">
+    <div id="splitFields" style="display:none">
+      <label>替代 m/z</label><input id="annMz" type="number" step="0.0001">
+      <label>替代强度</label><input id="annInt" type="number" step="1">
+    </div>
+    <div class="row" style="margin-top:6px"><button onclick="doAnnotation()">提交峰操作</button></div>
+    <h2>质量校准</h2>
+    <textarea id="calPoints" placeholder="每行：measured,reference,label&#10;195.0871,195.087652,M0"></textarea>
+    <div class="row" style="margin-top:6px"><button onclick="doCalibrate()">修订校准点</button>
+      <button onclick="doRollback()">回滚到 v2</button></div>
+    <h2>基线 / 规则</h2>
+    <div class="row"><label style="flex:1">噪声基线<input id="noiseFloor" type="number" value="500"></label>
+      <label style="flex:1">相对阈值<input id="relThr" type="number" step="0.01" value="0.01"></label>
+      <button onclick="doBaseline()">保存</button></div>
+    <div class="row" style="margin-top:6px">
+      <label style="flex:1">ppm<input id="rulePpm" type="number" value="10"></label>
+      <label style="flex:1">Da<input id="ruleDa" type="number" step="0.001" value="0.005"></label>
+      <button onclick="doRules()">升级规则</button>
+    </div>
+    <h2>版本比较</h2>
+    <div class="row"><label style="flex:1">旧<input id="cmpOld" type="number" value="2"></label>
+      <label style="flex:1">新<input id="cmpNew" type="number"></label>
+      <button onclick="doCompare()">比较</button></div>
+  </div>
+
+  <div class="col">
+    <h2>谱图（滚轮缩放 · 拖拽平移 · 双击复位 · 点击峰查看）</h2>
+    <div class="legend">
+      <span><i class="dot" style="background:#7fb0ff"></i>观测峰</span>
+      <span><i class="dot" style="background:#ffd166"></i>选中候选同位素</span>
+      <span><i class="dot" style="background:#ff6b6b"></i>争用共享峰</span>
+      <span><i class="dot" style="background:#8be0c0"></i>已接受</span>
+      <span><i class="dot" style="background:#555f76"></i>污染</span>
+    </div>
+    <canvas id="spec" width="900" height="460"></canvas>
+    <h2>候选叠加</h2>
+    <div class="row">
+      <label class="muted" style="margin:0">叠加候选</label>
+      <select id="overlaySelect" multiple size="4" style="height:70px"></select>
+      <button onclick="clearOverlay()">清除叠加</button>
+    </div>
+    <div id="peakInfo" class="card" style="display:none"></div>
+    <h2>隔离的损坏扫描</h2>
+    <div id="quarantine" class="muted">导入后在此显示逐行错误。</div>
+  </div>
+
+  <div class="col">
+    <div class="tabs">
+      <button id="tab-cand" class="on" onclick="showTab('cand')">候选</button>
+      <button id="tab-conflict">冲突队列 <span id="conflictCount" class="badge-count" style="display:none">0</span></button>
+      <button id="tab-history">裁定历史</button>
+      <button id="tab-compare">比较结果</button>
+      <button id="tab-evidence">证据链</button>
+    </div>
+    <div id="pane-cand"></div>
+    <div id="pane-conflict" style="display:none"></div>
+    <div id="pane-history" style="display:none"></div>
+    <div id="pane-compare" style="display:none"></div>
+    <div id="pane-evidence" style="display:none"></div>
+  </div>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

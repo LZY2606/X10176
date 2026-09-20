@@ -34,3 +34,6 @@ coverage/
 .vite/
 .turbo/
 *.tsbuildinfo
+
+# SQLite 运行数据（首次启动自动播种）
+/data/
