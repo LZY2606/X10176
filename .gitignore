@@ -34,3 +34,6 @@ coverage/
 .vite/
 .turbo/
 *.tsbuildinfo
+
+# --- 运行时 SQLite 数据（仍留在项目目录内，但不进入版本快照）---
+/data/

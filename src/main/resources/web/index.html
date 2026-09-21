@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>谱峰案卷</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header>
+  <h1>谱峰案卷</h1>
+  <div class="branch-bar">
+    <label>分析分支
+      <select id="branchSelect"></select>
+    </label>
+    <button id="refreshBtn">刷新</button>
+    <button id="forkBtn">从当前版本开分支…</button>
+    <span id="headInfo" class="muted"></span>
+  </div>
+</header>
+
+<main>
+<section class="panel" id="importPanel">
+  <h2>批量导入 centroid 峰表</h2>
+  <p class="muted">列格式：m/z, 强度, 扫描时间(秒), 极性(pos/neg)[, 扫描号]。损坏行会被隔离，其余照常进入。</p>
+  <textarea id="importText" rows="6" placeholder="195.0877,120000,120.5,pos,101&#10;196.0911,9800,120.5,pos,101&#10;bad,row,here"></textarea>
+  <div class="row">
+    <button id="importBtn">导入</button>
+    <button id="sampleBtn">填入示例数据</button>
+    <span id="importSummary" class="muted"></span>
+  </div>
+  <div id="quarantineBox"></div>
+</section>
+
+<section class="panel wide">
+  <div class="panel-head">
+    <h2>谱图与候选叠加</h2>
+    <div class="row">
+      <label>极性
+        <select id="polarityFilter">
+          <option value="ALL">全部</option>
+          <option value="POSITIVE">正离子</option>
+          <option value="NEGATIVE">负离子</option>
+        </select>
+      </label>
+      <button id="zoomInBtn">放大 +</button>
+      <button id="zoomOutBtn">缩小 −</button>
+      <button id="resetZoomBtn">重置</button>
+      <button id="runBtn">按当前规则生成候选</button>
+    </div>
+  </div>
+  <canvas id="spectrum" width="1100" height="320"></canvas>
+  <p class="muted">滚轮缩放，拖拽平移；彩色横线为候选 M0 与同位素峰，虚线表示缺失的低强度同位素（不算冲突）。</p>
+</section>
+
+<section class="panel wide">
+  <h2>候选解释</h2>
+  <table id="candidateTable">
+    <thead><tr>
+      <th>目标/加合物</th><th>电荷/极性</th><th>M0 观测峰</th><th>ppm 误差</th><th>Da 误差</th>
+      <th>同位素间距</th><th>使用的观测峰</th><th>规则</th><th>分数</th><th>操作</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<div class="two-col">
+<section class="panel">
+  <h2>冲突队列</h2>
+  <table id="conflictTable">
+    <thead><tr><th>候选</th><th>原因</th><th>最小共享峰集合</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</section>
+<section class="panel">
+  <h2>裁定历史</h2>
+  <table id="historyTable">
+    <thead><tr><th>时间</th><th>编辑者</th><th>候选</th><th>动作</th><th>基础版本</th><th>理由</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</section>
+</div>
+
+<section class="panel">
+  <h2>分析分支与版本</h2>
+  <div id="versionList"></div>
+  <div class="row">
+    <select id="compareFrom"></select>
+    <span>→</span>
+    <select id="compareTo"></select>
+    <button id="compareBtn">比较新旧结果</button>
+  </div>
+  <pre id="compareResult" class="result"></pre>
+</section>
+
+<section class="panel">
+  <h2>峰操作 / 校准 / 规则</h2>
+  <div class="two-col">
+    <div>
+      <h3>标记污染 / 拆分</h3>
+      <input id="peakIdInput" placeholder="峰 ID（pk-…）">
+      <input id="contamNote" placeholder="污染说明">
+      <div class="row">
+        <button id="contamBtn">标为污染</button>
+        <button id="uncontamBtn">取消污染标记</button>
+      </div>
+      <p class="muted">拆分过饱和峰（至少两个分量，格式 m/z:rt:强度，逗号分隔）：</p>
+      <input id="splitParts" placeholder="195.0871:120.4:60000,195.0883:120.6:60000">
+      <button id="splitBtn">拆分选中峰</button>
+    </div>
+    <div>
+      <h3>质量校准点</h3>
+      <textarea id="calibPoints" rows="4" placeholder="测量m/z,理论m/z（每行一对）&#10;195.0860,195.08765"></textarea>
+      <div class="row">
+        <button id="calibBtn">修订校准点</button>
+        <input id="rollbackVersion" placeholder="回滚到配置版本号" style="width:9rem">
+        <button id="rollbackBtn">校准回滚</button>
+      </div>
+      <h3>规则升级</h3>
+      <p class="muted">把 ppm 容差改为新值后升级，旧 run 仍保留在旧版本上可查看：</p>
+      <div class="row">
+        <label>ppm<input id="newPpm" type="number" step="0.1" style="width:6rem"></label>
+        <label>Da<input id="newDa" type="number" step="0.0001" style="width:8rem"></label>
+        <button id="upgradeBtn">升级规则配置</button>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

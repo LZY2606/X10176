@@ -1,0 +1,57 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #0f1420;
+  color: #d8e0ec;
+}
+header {
+  padding: 14px 22px;
+  background: linear-gradient(120deg, #16203a, #1d2b4d);
+  border-bottom: 1px solid #2a3a5f;
+}
+h1 { margin: 0 0 8px; font-size: 24px; letter-spacing: 2px; }
+h2 { font-size: 16px; margin: 0 0 10px; }
+h3 { font-size: 13px; margin: 12px 0 6px; color: #9fb6e0; }
+main { padding: 16px 22px; display: flex; flex-direction: column; gap: 14px; }
+.panel {
+  background: #161d2e;
+  border: 1px solid #263450;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.panel.wide { }
+.panel-head { display: flex; justify-content: space-between; align-items: center; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.row { display: flex; gap: 8px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
+.muted { color: #7f8da8; font-size: 12px; }
+button {
+  background: #2c5fd6; color: white; border: none; border-radius: 6px;
+  padding: 6px 12px; cursor: pointer; font-size: 13px;
+}
+button:hover { background: #3d72e8; }
+button.secondary { background: #38476b; }
+button.danger { background: #b0413e; }
+button.good { background: #2f8f5b; }
+textarea, input, select {
+  background: #0d1322; border: 1px solid #2f4060; color: #d8e0ec;
+  border-radius: 6px; padding: 6px 8px; font-size: 13px;
+}
+textarea { width: 100%; font-family: ui-monospace, monospace; }
+input, select { margin: 2px 4px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, td { border-bottom: 1px solid #25314c; padding: 5px 7px; text-align: left; vertical-align: top; }
+th { color: #9fb6e0; position: sticky; top: 0; background: #161d2e; }
+canvas { width: 100%; background: #0b0f1a; border-radius: 8px; cursor: crosshair; }
+.tag { display: inline-block; border-radius: 4px; padding: 0 6px; font-size: 11px; }
+.tag.pos { background: #1d3d2e; color: #8fe0b0; }
+.tag.neg { background: #3d1d2e; color: #e08fa8; }
+.tag.contam { background: #41321d; color: #e0c08f; }
+pre.result { background: #0d1322; padding: 10px; border-radius: 6px; font-size: 12px; overflow-x: auto; }
+.version-chip {
+  display: inline-block; margin: 3px; padding: 4px 9px; border-radius: 14px;
+  background: #202c47; border: 1px solid #32476e; cursor: pointer; font-size: 12px;
+}
+.version-chip.head { border-color: #4d7cff; color: #b8ccff; }
+.err-row { color: #ff9e9a; font-size: 12px; font-family: ui-monospace, monospace; }
+#candidateTable td:last-child button { padding: 3px 8px; margin-right: 4px; }
